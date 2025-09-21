@@ -1,6 +1,7 @@
 # Data directories - too large for GitHub, can be downloaded separately
 data/*
 !data/ERA5_const_sfc_variables.nc
+!data/samples_*.nc
 data_reduced_*/
 
 # TensorBoard logs - not needed in repository
@@ -9,8 +10,8 @@ examples/runs_*/
 # Model checkpoints - can be downloaded separately if needed
 Model_chpt/
 
-# Large sample files - can be regenerated
-samples_*.nc
+# Large sample files - include in repository as they're essential for training
+# samples_*.nc
 
 # Python
 __pycache__/
