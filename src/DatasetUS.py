@@ -66,26 +66,19 @@ class UpscaleDataset(torch.utils.data.Dataset):
                               dim="time")
 
         print("All files accessed. Creating tensors")
-        # WEEKLY DATA SUBSAMPLING - Update ntime to reflect weekly data
-        # Original code (commented out):
-        # self.ntime = len(ds_US.time)
-        
-        # New code: Calculate weekly data size
-        self.ntime = len(ds_US.time) // 7  # Weekly data: every 7th day
-        print(f"Original time steps: {len(ds_US.time)}")
-        print(f"Weekly time steps: {self.ntime} (86% reduction)")
-
         # Convert xarray dataarrays into torch Tensor (loads into memory)
         t = torch.from_numpy(ds_US.VAR_2T.to_numpy()).float()
 
         # WEEKLY DATA SUBSAMPLING - Take every 7th day for 86% data reduction
-        # Original code (commented out):
-        # fine = torch.stack((t,), dim=1)
-        
-        # New code: Weekly sampling (every 7th day)
         print(f"Original data shape: {t.shape}")
         t_weekly = t[::7]  # Take every 7th day (weekly data)
         print(f"Weekly data shape: {t_weekly.shape} (86% reduction)")
+        
+        # Update ntime to reflect actual weekly data size
+        self.ntime = t_weekly.shape[0]  # Use actual weekly data length
+        print(f"Original time steps: {len(ds_US.time)}")
+        print(f"Weekly time steps: {self.ntime} (86% reduction)")
+        
         fine = torch.stack((t_weekly,), dim=1)
 
         # Transforms
