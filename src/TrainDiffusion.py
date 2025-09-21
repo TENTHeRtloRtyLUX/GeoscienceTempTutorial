@@ -16,21 +16,11 @@ class EDMLoss:
 
     def __call__(self, net, images, conditional_img=None, labels=None,
                  augment_pipe=None):
-        # Debug: Print shapes to understand the channel issue
-        print(f"DEBUG EDMLoss:")
-        print(f"  images shape: {images.shape}")
-        print(f"  conditional_img shape: {conditional_img.shape}")
-        
         rnd_normal = torch.randn([images.shape[0], 1, 1, 1], device=images.device)
         sigma = (rnd_normal * self.P_std + self.P_mean).exp()
         weight = (sigma ** 2 + self.sigma_data ** 2) / (sigma * self.sigma_data)**2
         y, augment_labels = augment_pipe(images) if augment_pipe is not None else (images, None)
         n = torch.randn_like(y) * sigma
-        
-        print(f"  y (noisy target) shape: {y.shape}")
-        print(f"  y + n (noisy target) shape: {(y + n).shape}")
-        print(f"  Expected concatenated shape: {torch.cat([y + n, conditional_img], dim=1).shape}")
-        
         D_yn = net(y + n, sigma, conditional_img, labels,
                    augment_labels=augment_labels)
         loss = weight * ((D_yn - y) ** 2)
@@ -112,8 +102,9 @@ def sample_model(model, dataloader, num_steps=40, sigma_min=0.002,
     sigma_min = max(sigma_min, model.sigma_min)
     sigma_max = min(sigma_max, model.sigma_max)
 
-    # Use the same number of channels as the input images
-    init_noise = torch.randn((images_input.shape[0], images_input.shape[1], images_input.shape[2],
+    # Create noise with the same shape as the target (residual) - 1 channel
+    # images_input has 3 channels (temp + constants), but we need 1 channel (residual)
+    init_noise = torch.randn((images_input.shape[0], 1, images_input.shape[2],
                               images_input.shape[3]),
                              dtype=torch.float64, device=device)
 

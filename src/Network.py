@@ -365,21 +365,10 @@ class EDMPrecond(torch.nn.Module):
 
     def forward(self, x, sigma, condition_img=None, class_labels=None,
                 force_fp32=True, **model_kwargs):
-        # Debug: Print shapes to understand the channel issue
-        print(f"DEBUG EDMPrecond:")
-        print(f"  x (noisy image) shape: {x.shape}")
-        print(f"  condition_img shape: {condition_img.shape}")
-        
         if condition_img is not None:
             in_img = torch.cat([x, condition_img], dim=1)
-            print(f"  concatenated in_img shape: {in_img.shape}")
         else:
             in_img = x
-            print(f"  in_img shape (no condition): {in_img.shape}")
-            
-        print(f"  UNet expects in_channels: {self.in_channels}")
-        print(f"  Actual in_img channels: {in_img.shape[1]}")
-        
         sigma = sigma.reshape(-1, 1, 1, 1)
         class_labels = None if self.label_dim == 0 else torch.zeros([1, self.label_dim], device=in_img.device) if class_labels is None else class_labels.to(torch.float32).reshape(-1, self.label_dim)
         dtype = torch.float16 if (self.use_fp16 and not force_fp32 and in_img.device.type == 'cuda') else torch.float32
