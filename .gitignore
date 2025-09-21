@@ -1,5 +1,6 @@
 # Data directories - too large for GitHub, can be downloaded separately
-data/
+data/*
+!data/ERA5_const_sfc_variables.nc
 data_reduced_*/
 
 # TensorBoard logs - not needed in repository
