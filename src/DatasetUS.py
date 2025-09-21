@@ -159,10 +159,13 @@ class UpscaleDataset(torch.utils.data.Dataset):
                     std_var = weighted_var.std().values    # Convert to numpy immediately
                     print(f"Mean:{mean_var}, Std{std_var}")
                     const_var_norm = (const_var - mean_var) / std_var
-                    self.const_var[i] = torch.from_numpy(const_var_norm.to_numpy()).float()
+                    const_var_tensor = torch.from_numpy(const_var_norm.to_numpy()).float()
                 else:
                     # For lsm, just convert to numpy
-                    self.const_var[i] = torch.from_numpy(const_var.to_numpy()).float()
+                    const_var_tensor = torch.from_numpy(const_var.to_numpy()).float()
+                
+                # Replicate constant variable for all time steps
+                self.const_var[:, i, :, :] = const_var_tensor.unsqueeze(0).expand(self.ntime, -1, -1)
             self.inputs = torch.concatenate((self.inputs, self.const_var), dim=1)
 
         # Dimensions from orig to coarse
