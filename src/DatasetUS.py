@@ -165,7 +165,7 @@ class UpscaleDataset(torch.utils.data.Dataset):
                     const_var_tensor = torch.from_numpy(const_var.to_numpy()).float()
                 
                 # Replicate constant variable for all time steps
-                self.const_var[:, i, :, :] = const_var_tensor.unsqueeze(0).expand(self.ntime, -1, -1)
+                self.const_var[:, i, :, :] = const_var_tensor.expand(self.ntime, -1, -1)
             self.inputs = torch.concatenate((self.inputs, self.const_var), dim=1)
 
         # Dimensions from orig to coarse
