@@ -13,6 +13,12 @@ def sample_unet(input_batch, model, device, dataset):
     condition_params = torch.stack(
         (input_batch["doy"].to(device),
          input_batch["hour"].to(device)), dim=1)
+    
+    # Pad images_input to 5 channels for U-Net model
+    if images_input.shape[1] < 5:
+        padding = images_input[:, 0:1, :, :].repeat(1, 5 - images_input.shape[1], 1, 1)
+        images_input = torch.cat([images_input, padding], dim=1)
+    
     residual = model(images_input, class_labels=condition_params)
     predicted = dataset.residual_to_fine_image(residual.detach().cpu(), coarse)
     return coarse, fine, predicted
@@ -28,6 +34,20 @@ def sample_model_EDS(input_batch, model, device, dataset, num_steps=40,
     condition_params = torch.stack(
         (input_batch["doy"].to(device),
          input_batch["hour"].to(device)), dim=1)
+    
+    # Ensure images_input has exactly 5 channels for diffusion model
+    # (3 noise channels + 5 condition channels = 8 total channels)
+    if images_input.shape[1] != 5:
+        if images_input.shape[1] < 5:
+            # Pad with duplicated temperature channel
+            padding = images_input[:, 0:1, :, :].repeat(1, 5 - images_input.shape[1], 1, 1)
+            images_input = torch.cat([images_input, padding], dim=1)
+        else:
+            # Trim to exactly 5 channels
+            images_input = images_input[:, :5, :, :]
+    
+    # Verify we have exactly 5 channels
+    assert images_input.shape[1] == 5, f"Expected 5 channels, got {images_input.shape[1]}"
 
     sigma_min = max(sigma_min, model.sigma_min)
     sigma_max = min(sigma_max, model.sigma_max)

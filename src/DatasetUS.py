@@ -69,17 +69,29 @@ class UpscaleDataset(torch.utils.data.Dataset):
         # Convert xarray dataarrays into torch Tensor (loads into memory)
         t = torch.from_numpy(ds_US.VAR_2T.to_numpy()).float()
 
-        # WEEKLY DATA SUBSAMPLING - Take every 7th day for 86% data reduction
+        # # WEEKLY DATA SUBSAMPLING - Take every 7th day for 86% data reduction
+        # print(f"Original data shape: {t.shape}")
+        # # t_weekly = t[::7]  # Take every 7th day (weekly data)
+        # # print(f"Weekly data shape: {t_weekly.shape} (86% reduction)")
+        
+        # # Update ntime to reflect actual weekly data size
+        # self.ntime = t_weekly.shape[0]  # Use actual weekly data length
+        # print(f"Original time steps: {len(ds_US.time)}")
+        # print(f"Weekly time steps: {self.ntime} (86% reduction)")
+        
+        # fine = torch.stack((t_weekly,), dim=1)
+
+        # USE FULL DATASET - No data reduction
         print(f"Original data shape: {t.shape}")
-        t_weekly = t[::7]  # Take every 7th day (weekly data)
-        print(f"Weekly data shape: {t_weekly.shape} (86% reduction)")
-        
-        # Update ntime to reflect actual weekly data size
-        self.ntime = t_weekly.shape[0]  # Use actual weekly data length
+        # t_weekly = t[::7]  # COMMENTED OUT - No weekly subsampling
+        # print(f"Weekly data shape: {t_weekly.shape} (86% reduction)")
+
+        # Use full dataset
+        self.ntime = t.shape[0]  # Use full data length
         print(f"Original time steps: {len(ds_US.time)}")
-        print(f"Weekly time steps: {self.ntime} (86% reduction)")
-        
-        fine = torch.stack((t_weekly,), dim=1)
+        print(f"Using full time steps: {self.ntime} (no reduction)")
+
+        fine = torch.stack((t,), dim=1)  # Use full data 't' instead of 't_weekly'
 
         # Transforms
         # Coarsen
@@ -173,17 +185,17 @@ class UpscaleDataset(torch.utils.data.Dataset):
         
         # WEEKLY DATA SUBSAMPLING - Apply same sampling to time embeddings
         # Original code (commented out):
-        # self.year = time_dt.year.values
-        # self.month = time_dt.month.values
-        # self.day = time_dt.day.values
-        # self.hour = time_dt.hour.values
+        self.year = time_dt.year.values
+        self.month = time_dt.month.values
+        self.day = time_dt.day.values
+        self.hour = time_dt.hour.values
         
-        # New code: Weekly sampling for time embeddings
-        self.year = time_dt.year.values[::7]      # Every 7th day
-        self.month = time_dt.month.values[::7]    # Every 7th day
-        self.day = time_dt.day.values[::7]        # Every 7th day
-        self.hour = time_dt.hour.values[::7]      # Every 7th day
-        # day of year (1 to 360)
+        # # New code: Weekly sampling for time embeddings
+        # self.year = time_dt.year.values[::7]      # Every 7th day
+        # self.month = time_dt.month.values[::7]    # Every 7th day
+        # self.day = time_dt.day.values[::7]        # Every 7th day
+        # self.hour = time_dt.hour.values[::7]      # Every 7th day
+        # # day of year (1 to 360)
         self.doy = ((self.month - 1.) * 30 + (self.day - 1.))
 
         # Normalize and convert to numpy (load into mem)
